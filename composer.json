@@ -1,0 +1,16 @@
+{
+	"name": "poweredbycoffee/cloudinary",
+	"description": "Drop-in to use Cloudinary for images",
+	"license": "gpl2",
+	"type":"wordpress-muplugin",
+	"authors": [
+		{
+			"name": "Chris Wharton",
+			"email": "chris@poweredbycoffee.co.uk"
+		}
+	],
+	"require": {
+		"php": "^8"
+	},
+	"config": {}
+}
