@@ -1,5 +1,5 @@
 {
-	"name": "poweredbycoffee/cloudinary",
+	"name": "poweredbycoffee/pbc-cloudinary-integration",
 	"description": "Drop-in to use Cloudinary for images",
 	"license": "gpl2",
 	"type":"wordpress-muplugin",
