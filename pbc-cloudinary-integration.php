@@ -46,6 +46,9 @@ class Cloudinary {
                 self::$cloudinary_sync_folder = str_replace('//','/',self::$options['cloudinary_auto_upload_mapping_folder'].'/');
                 self::$cloudinary_base_url = str_replace('*|cloud_name|*',self::$options['cloudinary_cloud_name'],self::$cloudinary_base_url);
                 self::$uploads_dir = wp_upload_dir();
+                if(isset(self::$options['cloudinary_default_settings'])){
+                    self::$basic_cloudinary_conversions = self::$options['cloudinary_default_settings'];
+                }
                 add_filter( 'wp_get_attachment_url', array( $this, 'filter_attachment_url' ), 99, 2 );
                 //add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_src' ), 99, 4 ); Seems to just be called on already converted sources
                 add_filter( 'wp_calculate_image_srcset', array( $this, 'filter_srcset_urls' ), 99, 5 );

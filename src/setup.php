@@ -101,6 +101,14 @@ class AdminSetup {
 			'pbc-cloudinary-settings-section',							// section for the
 			array('option_group' => 'pbc_cloudinary', 'option_name' => 'cloudinary_auto_upload_mapping_folder', 'class' => 'regular-text', 'default' => 'media', 'option_type' => 'text')
 		);
+		add_settings_field(
+			'cloudinary_default_settings', 									// slug
+			'Cloudinary default image settings', 									// tite
+			array( __class__, 'field_create_standard_input' ), 			// callback
+			'pbc-cloudinary-settings', 									// page to show the setting on
+			'pbc-cloudinary-settings-section',							// section for the
+			array('option_group' => 'pbc_cloudinary', 'option_name' => 'cloudinary_default_settings', 'class' => 'regular-text', 'default' => 'f_auto/q_auto:best/dpr_auto/', 'option_type' => 'text')
+		);
         /*add_settings_field(
 			'cloudinary_api_key', 									// slug
 			'API Key', 									// tite
@@ -142,7 +150,7 @@ class AdminSetup {
 	}
 
 	public static function main_description() {
-		echo 'Settings and control for the Cloudinary integration.';
+		echo 'Settings and control for the Cloudinary integration. You can find a full list of <a href="https://cloudinary.com/documentation/transformation_reference" target="_blank">Cloudinary\'s available image settings here</a>.';
 	}
 
     public static function dev_description() {
