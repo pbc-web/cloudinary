@@ -44,10 +44,31 @@ class AdminSetup {
 		);
 	}
 
+	public static function get_settings_from_env() {
+		$options = [];
+		foreach([
+			'CLOUDINARY_ENABLED',
+			'CLOUDINARY_CLOUD_NAME',
+			'CLOUDINARY_AUTO_UPLOAD_MAPPING_FOLDER',
+			'CLOUDINARY_DEFAULT_SETTINGS',
+			'PRODUCTION_DOMAIN_SWITCH',
+			'PRODUCTION_DOMAIN',
+			'ADMIN_SWITCH'
+		] as $setting){
+			if(isset($_SERVER[$setting]) && $_SERVER[$setting]){
+				$options[strtolower($setting)] = $_SERVER[$setting];
+			}
+		}
+		return $options;
+	}
+
     public static function get_settings() {
         if(empty(self::$options)) {
             self::$options = get_option( 'pbc_cloudinary' );
         }
+		if(!self::$options){
+			self::$options = self::get_settings_from_env();
+		}
         return self::$options;
     }
 
@@ -141,11 +162,19 @@ class AdminSetup {
 		);
         add_settings_field(
 			'production_domain', 									// slug
-			'Root url of the production environment', 									// tite
+			'Root url of the production environment (please include https://)', 									// tite
 			array( __class__, 'field_create_standard_input' ), 			// callback
 			'pbc-cloudinary-settings', 									// page to show the setting on
 			'pbc-cloudinary-settings-section-dev',							// section for the
 			array('option_group' => 'pbc_cloudinary', 'option_name' => 'production_domain', 'class' => 'regular-text', 'default' => '', 'option_type' => 'text')
+		);
+		add_settings_field(
+			'admin_switch', 									// slug
+			'Apply filters to admin', 									// tite
+			array( __class__, 'field_create_toggle' ), 			// callback
+			'pbc-cloudinary-settings', 									// page to show the setting on
+			'pbc-cloudinary-settings-section-dev',							// section for the
+			array('option_group' => 'pbc_cloudinary', 'option_name' => 'admin_switch', 'class' => 'regular-text', 'default' => false)
 		);
 	}
 
