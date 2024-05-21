@@ -147,6 +147,14 @@ class AdminSetup {
 			'pbc-cloudinary-settings-section-dev',							// section for the
 			array('option_group' => 'pbc_cloudinary', 'option_name' => 'production_domain', 'class' => 'regular-text', 'default' => '', 'option_type' => 'text')
 		);
+		add_settings_field(
+			'admin_switch', 									// slug
+			'Apply filters to admin', 									// tite
+			array( __class__, 'field_create_toggle' ), 			// callback
+			'pbc-cloudinary-settings', 									// page to show the setting on
+			'pbc-cloudinary-settings-section-dev',							// section for the
+			array('option_group' => 'pbc_cloudinary', 'option_name' => 'admin_switch', 'class' => 'regular-text', 'default' => false)
+		);
 	}
 
 	public static function main_description() {

@@ -4,7 +4,7 @@
  * Plugin Name: Cloudinary Integration
  * Plugin URI: https://poweredbycoffee.co.uk
  * Description: Integrate your site with your Cloudinary account
- * Version: 0.1
+ * Version: 0.0.2
  * Author: poweredbycoffee, chris-coffee
  * Author URI: https://poweredbycoffee.co.uk
  *
@@ -116,7 +116,7 @@ class Cloudinary {
             if(is_array($cropping)) {
                 $compass = $this->convert_to_compass($cropping);
             }
-            $modifications = 'c_l'.($cropping !== false ? 'fill' : 'pad').$compass.',h_'.$global_sizes[$size]['height'].',w_'.$global_sizes[$size]['width'].'/';
+            $modifications = 'c_'.($cropping !== false ? 'lfill' : 'fit').$compass.',h_'.$global_sizes[$size]['height'].',w_'.$global_sizes[$size]['width'].'/';
         }
         return $modifications;
     }
