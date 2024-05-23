@@ -4,7 +4,7 @@
  * Plugin Name: Cloudinary Integration
  * Plugin URI: https://poweredbycoffee.co.uk
  * Description: Integrate your site with your Cloudinary account
- * Version: 0.0.2
+ * Version: 0.0.4
  * Author: poweredbycoffee, chris-coffee
  * Author URI: https://poweredbycoffee.co.uk
  *
@@ -275,21 +275,15 @@ class Cloudinary {
     public function filter_srcset_urls($sources, $size_array, $image_src, $image_meta, $attachment_id) {
         $sizes = $image_meta['sizes'];
         $modified_sources = array();
-        /*var_dump($sources);
-        echo '<br><br>';
-        var_dump($size_array);
-        echo '<br><br>';
-        var_dump($image_src);
-        echo '<br><br>';
-        var_dump($image_meta);
-        echo '<br><br>';
-        var_dump($this->get_registered_image_sizes());
-        echo '<br><br>';*/
+
+        preg_match('/sites\/\d*\//',$image_src,$site_match);
+        $site = isset($site_match) && !empty($site_match) && isset($site_match[0]) ? $site_match[0] : '';
+        
         foreach($sizes as $size_name=>$size) {
             $modifications = $this->create_sizing_filters($size_name);
             $descriptor = isset($sources[$size['width']]) && isset($sources[$size['width']]['descriptor']) && ($sources[$size['width']]['descriptor'] === 'w' || $sources[$size['width']]['descriptor'] === 'x') ? $sources[$size['width']]['descriptor'] : 'w';
             $modified_sources[$size['width']] = array(
-                'url' => $this->filter_attachment_url($image_meta['file'], $attachment_id, $modifications),
+                'url' => $this->filter_attachment_url($site.$image_meta['file'], $attachment_id, $modifications),
                 'descriptor' => $descriptor,
                 'value' => $sources[$size['width']]['value'] ?? $size['width']
             );
