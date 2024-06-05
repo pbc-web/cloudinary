@@ -72,10 +72,44 @@ class Cloudinary {
                 add_filter( 'wp_calculate_image_srcset', array( $this, 'filter_srcset_urls' ), 99, 5 );
                 add_filter( 'render_block_core/image', array( $this, 'parse_core_image_block' ), 99, 3 );
                 add_filter( 'render_block_core/cover', array( $this, 'parse_core_cover_block' ), 99, 3 );
+                add_filter( 'wp_get_attachment_image_attributes', array( $this, 'filter_image_attributes' ), 99, 3 );
                 add_action( 'init', array( $this, 'add_image_sizes' ));
             }
         }
 	}
+
+    public function filter_image_attributes( $attr, $attachment, $size ) {
+        if( 
+            ( isset( self::$custom_face_crop_image_sizes ) && !empty( self::$custom_face_crop_image_sizes ) )
+            && ( isset($size) && array_key_exists( $size, self::$custom_face_crop_image_sizes ) )
+        ){
+            $size_array = array( absint( self::$custom_face_crop_image_sizes[$size]['width'] ), absint( self::$custom_face_crop_image_sizes[$size]['height'] ) );
+            $image_meta = wp_get_attachment_metadata( $attachment->ID );
+            $new_sizes = array();
+            $mime_type = $image_meta['sizes'][key($image_meta['sizes'])]['mime-type'];
+            $file = $image_meta['original_image'] ?? $image_meta['file'];
+            foreach(self::$custom_face_crop_image_sizes as $fc_size => $details){
+                $new_sizes[$fc_size] = array_merge(
+                    $details,
+                    array(
+                        'mime-type' => $mime_type,
+                        'file' => str_replace('.', '-'.$details['width'].'x'.$details['height'].'.', $file),
+                        'filesize' => 0
+                    )
+                );
+            }
+            $image_meta['sizes'] = $new_sizes;
+            $srcset     = wp_calculate_image_srcset( $size_array, $attr['src'], $image_meta, $attachment->ID );
+			$sizes      = wp_calculate_image_sizes( $size_array, $attr['src'], $image_meta, $attachment->ID );
+
+			if ( $srcset && $sizes ) {
+		    	$attr['srcset'] = $srcset;
+				$attr['sizes'] = $sizes;
+			}
+        }
+
+        return $attr;
+    }
 
     public function add_image_sizes() {
         if( isset( self::$custom_face_crop_image_sizes ) && !empty( self::$custom_face_crop_image_sizes ) ){
@@ -143,6 +177,9 @@ class Cloudinary {
         if( isset($size) && array_key_exists( $size, self::$custom_face_crop_image_sizes )){
             $size = self::$custom_face_crop_image_sizes[$size];
             $extra_options = "c_lfill,h_".$size['height'].",w_".$size['width'].",g_faces/";
+            $image[1] = $size['width'];
+            $image[2] = $size['height'];
+            $image[3] = true;
         }
 
         $new_url = $this->filter_attachment_url( $src, $attachment_id, $extra_options );
