@@ -10,7 +10,8 @@
 		}
 	],
 	"require": {
-		"php": "^8"
+		"php": "^8",
+		"pbc/caffeine": "^1.5.5"
 	},
 	"config": {}
 }
