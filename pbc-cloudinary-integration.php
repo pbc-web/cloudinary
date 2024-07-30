@@ -1,4 +1,4 @@
-<?php
+	<?php
 
 /**
  * Plugin Name: Cloudinary Integration
@@ -287,20 +287,22 @@ class Cloudinary {
             return $url;
         }
 
-        //svg and mp4 bypass
-        $ft = wp_check_filetype($url);
-        if( is_array($ft) && isset($ft['ext']) &&
-            (
-                $ft['ext'] === 'svg' ||
-                $ft['ext'] === 'mp4'
-            )
-        ){
-            if(isset(self::$options['production_domain_switch'])) {
-                $prod_uploads = str_replace( self::$site_url, rtrim(self::$options['production_domain'], '\/\\'), self::$uploads_dir['baseurl']);
-                $url = str_replace(self::$uploads_dir['baseurl'], $prod_uploads, $url);
-            }
-            return $url;
-        }
+	if($url) {
+	        //svg and mp4 bypass
+	        $ft = wp_check_filetype($url);
+	        if( is_array($ft) && isset($ft['ext']) &&
+	            (
+	                $ft['ext'] === 'svg' ||
+	                $ft['ext'] === 'mp4'
+	            )
+	        ){
+	            if(isset(self::$options['production_domain_switch'])) {
+	                $prod_uploads = str_replace( self::$site_url, rtrim(self::$options['production_domain'], '\/\\'), self::$uploads_dir['baseurl']);
+	                $url = str_replace(self::$uploads_dir['baseurl'], $prod_uploads, $url);
+	            }
+	            return $url;
+	        }
+	}
 
         $finding = array(self::$uploads_dir['baseurl']);
         if(isset(self::$options['production_domain_switch'])) {
