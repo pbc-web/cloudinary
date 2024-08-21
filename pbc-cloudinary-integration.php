@@ -1,4 +1,4 @@
-	<?php
+<?php
 
 /**
  * Plugin Name: Cloudinary Integration
@@ -194,7 +194,7 @@ class Cloudinary {
         }
 
         $new_url = $this->filter_attachment_url( $src, $attachment_id, $extra_options );
-        $image[0] = $new_url;
+        if( is_array( $image ) ) $image[0] = $new_url;
 
         return $image;
     }
@@ -286,23 +286,24 @@ class Cloudinary {
         if(is_admin() && (!isset(self::$options['admin_switch']) || !self::$options['admin_switch'])){
             return $url;
         }
+        if($url === null){
+            return $url;
+        }
 
-	if($url) {
-	        //svg and mp4 bypass
-	        $ft = wp_check_filetype($url);
-	        if( is_array($ft) && isset($ft['ext']) &&
-	            (
-	                $ft['ext'] === 'svg' ||
-	                $ft['ext'] === 'mp4'
-	            )
-	        ){
-	            if(isset(self::$options['production_domain_switch'])) {
-	                $prod_uploads = str_replace( self::$site_url, rtrim(self::$options['production_domain'], '\/\\'), self::$uploads_dir['baseurl']);
-	                $url = str_replace(self::$uploads_dir['baseurl'], $prod_uploads, $url);
-	            }
-	            return $url;
-	        }
-	}
+        //svg and mp4 bypass
+        $ft = wp_check_filetype($url);
+        if( is_array($ft) && isset($ft['ext']) &&
+            (
+                $ft['ext'] === 'svg' ||
+                $ft['ext'] === 'mp4'
+            )
+        ){
+            if(isset(self::$options['production_domain_switch'])) {
+                $prod_uploads = str_replace( self::$site_url, rtrim(self::$options['production_domain'], '\/\\'), self::$uploads_dir['baseurl']);
+                $url = str_replace(self::$uploads_dir['baseurl'], $prod_uploads, $url);
+            }
+            return $url;
+        }
 
         $finding = array(self::$uploads_dir['baseurl']);
         if(isset(self::$options['production_domain_switch'])) {
