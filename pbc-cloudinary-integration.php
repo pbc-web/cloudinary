@@ -152,19 +152,21 @@ class Cloudinary {
     }
 
     public function parse_core_image_block( $block_content, $parsed, $block_class ) {
-        $size = $parsed['attrs']['sizeSlug'];
-        $id = $parsed['attrs']['id'];
-        $matches = array();
-        preg_match('/src="(.*?)"/',$block_content,$matches);
-        if(isset($matches[1])) {
-            preg_match('/sites\/(\d*)\//',$matches[1],$sites);
-            $site = isset($sites) && !empty($sites) && isset($sites[1]) ? $sites[1] : '';
-            $details = $this->filtered_attachment_metadata($id, $site);
-            if($details){
-                $url_to_mod = isset($sites) && !empty($sites) ? $sites[0].$details['file'] : $details['file'];
-                $modifications = $this->create_sizing_filters($size);
-                $url = $this->filter_attachment_url($url_to_mod, $id, $modifications);
-                $block_content = str_replace($matches[1], $url, $block_content);
+        if(!empty($parsed['attrs'])){
+            $size = $parsed['attrs']['sizeSlug'];
+            $id = $parsed['attrs']['id'];
+            $matches = array();
+            preg_match('/src="(.*?)"/',$block_content,$matches);
+            if(isset($matches[1])) {
+                preg_match('/sites\/(\d*)\//',$matches[1],$sites);
+                $site = isset($sites) && !empty($sites) && isset($sites[1]) ? $sites[1] : '';
+                $details = $this->filtered_attachment_metadata($id, $site);
+                if($details){
+                    $url_to_mod = isset($sites) && !empty($sites) ? $sites[0].$details['file'] : $details['file'];
+                    $modifications = $this->create_sizing_filters($size);
+                    $url = $this->filter_attachment_url($url_to_mod, $id, $modifications);
+                    $block_content = str_replace($matches[1], $url, $block_content);
+                }
             }
         }
 
