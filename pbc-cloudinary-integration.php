@@ -80,7 +80,7 @@ class Cloudinary {
 	}
 
     public function add_cloudinary_meta() {
-        echo '<meta http-equiv="delegate-ch" content="sec-ch-width https://res.cloudinary.com; sec-ch-dpr https://res.cloudinary.com; sec-ch-viewport-width https://res.cloudinary.com;">'; 
+        echo '<meta http-equiv="delegate-ch" content="sec-ch-width https://res.cloudinary.com; sec-ch-dpr https://res.cloudinary.com; sec-ch-viewport-width https://res.cloudinary.com;"><link rel="preconnect" href="https://res.cloudinary.com"><link rel="dns-prefetch" href="https://res.cloudinary.com">'; 
     }
 
     public function filter_image_attributes( $attr, $attachment, $size ) {
