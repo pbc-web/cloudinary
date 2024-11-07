@@ -80,7 +80,7 @@ class Cloudinary {
 	}
 
     public function add_cloudinary_meta() {
-        echo '<meta http-equiv="delegate-ch" content="sec-ch-width https://res.cloudinary.com; sec-ch-dpr https://res.cloudinary.com; sec-ch-viewport-width https://res.cloudinary.com;"><link rel="preconnect" href="https://res.cloudinary.com"><link rel="dns-prefetch" href="https://res.cloudinary.com">'; 
+        echo '<meta http-equiv="delegate-ch" content="sec-ch-width https://res.cloudinary.com; sec-ch-dpr https://res.cloudinary.com; sec-ch-viewport-width https://res.cloudinary.com;"><link rel="dns-prefetch" href="https://res.cloudinary.com"><link rel="preconnect" href="https://res.cloudinary.com">'; 
     }
 
     public function filter_image_attributes( $attr, $attachment, $size ) {
@@ -111,6 +111,7 @@ class Cloudinary {
 		    	$attr['srcset'] = $srcset;
 				$attr['sizes'] = $sizes;
 			}
+
         }
 
         return $attr;
@@ -195,7 +196,7 @@ class Cloudinary {
             $image[3] = true;
         }
 
-        $new_url = $this->filter_attachment_url( $src, $attachment_id, $extra_options );
+        $new_url = $this->filter_attachment_url( $src, $attachment_id, $width, $height, $extra_options );
         if( is_array( $image ) ) $image[0] = $new_url;
 
         return $image;
@@ -224,18 +225,24 @@ class Cloudinary {
         return $converted ? 'g'.$converted.',' : '';
     }
 
-    public function check_image_sizing( $url, $attachment_id ){
+    public function check_image_sizing( $url, $attachment_id, $width, $height ){
         $image_sizing = array(
             'url' => $url,
             'extra_cloudinary_options' => ''
         );
 
         $matches = array();
+        $get_values = array();
         preg_match('/-(\d*)x(\d*)./',$url,$matches);
         if(isset($matches[0]) && isset($matches[1]) && isset($matches[2])){
-            $get_values = $this->create_sizing_filters($matches[1],$attachment_id,$url);
-            $image_sizing['extra_cloudinary_options'] = is_array($get_values) ? $get_values['modifications'] : $get_values;
-            if(is_array($get_values) && isset($get_values['url'])){
+            $get_values = $this->create_sizing_filters($matches[1], $attachment_id, $url, $width, $height);
+        }else if( (isset($width) && $width > 0) && (isset($height) && $height > 0) ){
+            $get_values['modifications'] = $this->create_sizing_filters($width, $attachment_id, $url, $width, $height);
+        }
+
+        if($get_values && is_array($get_values)){
+            $image_sizing['extra_cloudinary_options'] = !empty($get_values) ? $get_values['modifications'] : $get_values;
+            if(!empty($get_values) && isset($get_values['url'])){
                 $image_sizing['url'] = $get_values['url'];
             }
         }
@@ -243,7 +250,7 @@ class Cloudinary {
         return $image_sizing;
     }
 
-    public function create_sizing_filters( $size, $attachment_id = false, $include_url = '' ){
+    public function create_sizing_filters( $size, $attachment_id = false, $include_url = '', $width = 0, $height = 0 ){
         $global_sizes = $this->get_registered_image_sizes();
         $file_path = '';
         //for standalone urls without any size definition
@@ -268,6 +275,9 @@ class Cloudinary {
             $height = $global_sizes[$size]['height'] > 0 ? ',h_'.$global_sizes[$size]['height'] : '';
             $modifications = 'c_'.($cropping !== false ? 'lfill' : 'limit').$compass.$height.$width.'/';
         }
+        if(!$modifications && (isset($width) && $width > 0) && (isset($height) && $height > 0)){
+            $modifications = 'c_limit,w_'.$width.',h_'.$height.'/';
+        }
         if($include_url && $attachment_id && $file_path){
             return array(
                 'url' => $file_path,
@@ -278,7 +288,7 @@ class Cloudinary {
         }
     }
 
-    public function filter_attachment_url( $url, $attachment_id, $extra_cloudinary_options=[] ) {
+    public function filter_attachment_url( $url, $attachment_id, $width = 0, $height = 0, $extra_cloudinary_options=[] ) {
         if(!self::$active){
             return $url;
         }
@@ -315,18 +325,19 @@ class Cloudinary {
 
         //try to prevent image sized files being sent to Cloudinary eg filename-WIDTHxHEIGHT.jpg
         if(!$extra_cloudinary_options){
-            $image_sizing = $this->check_image_sizing( $url, $attachment_id );
+            $image_sizing = $this->check_image_sizing( $url, $attachment_id, $width, $height );
             $url = $image_sizing['url'] ?? $url;
             $extra_cloudinary_options = $image_sizing['extra_cloudinary_options'] ?? $extra_cloudinary_options;
         }
 
-        $final_url = self::$cloudinary_base_url.self::$basic_cloudinary_conversions.$extra_cloudinary_options.self::$cloudinary_sync_folder.$url;
+        $image_url = str_replace('//', '/', self::$cloudinary_sync_folder.$url);
+        $final_url = self::$cloudinary_base_url.self::$basic_cloudinary_conversions.$extra_cloudinary_options.$image_url;
 
         return $final_url;
     }
 
     public function filter_srcset_urls($sources, $size_array, $image_src, $image_meta, $attachment_id) {
-        $sizes = $image_meta['sizes'];
+        $sizes = array_merge($this->get_registered_image_sizes(), $image_meta['sizes']);
         list($width, $height) = $size_array;
         $descriptor = isset($sources[$width]) && isset($sources[$width]['descriptor']) && ($sources[$width]['descriptor'] === 'w' || $sources[$width]['descriptor'] === 'x') ? $sources[$width]['descriptor'] : 'w';
         $image_basename = wp_basename( $image_meta['file'] );
@@ -358,12 +369,15 @@ class Cloudinary {
             if ( $image_edited && ! strpos( $image['file'], $image_edit_hash[0] ) ) {
                 continue;
             }
+            if($image['height'] === 0 || $image['width'] === 0){ //Figure out equivalent height of image for sizes that don't exist within $image_meta
+                list($image['width'],$image['height']) = wp_constrain_dimensions($image_meta['width'], $image_meta['height'], $image['width'], $image['height']);
+            } 
 
             if ( wp_image_matches_ratio( $width, $height, $image['width'], $image['height'] ) ) {
                 $modifications = $this->create_sizing_filters($size_name);
                 $descriptor = isset($sources[$image['width']]) && isset($sources[$image['width']]['descriptor']) && ($sources[$image['width']]['descriptor'] === 'w' || $sources[$image['width']]['descriptor'] === 'x') ? $sources[$image['width']]['descriptor'] : 'w';
                 $modified_sources[$image['width']] = array(
-                    'url' => $this->filter_attachment_url($image_path, $attachment_id, $modifications),
+                    'url' => $this->filter_attachment_url($image_path, $attachment_id, $width, $height, $modifications),
                     'descriptor' => $descriptor,
                     'value' => $sources[$image['width']]['value'] ?? $image['width']
                 );
