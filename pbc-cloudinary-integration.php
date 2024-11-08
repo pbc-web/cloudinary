@@ -70,7 +70,8 @@ class Cloudinary {
                 //add_filter( 'wp_get_attachment_url', array( $this, 'filter_attachment_url' ), 99, 2 ); Too early in the chain and without any sizing context
                 add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_src' ), 99, 4 ); 
                 add_filter( 'wp_calculate_image_srcset', array( $this, 'filter_srcset_urls' ), 99, 5 );
-                add_filter( 'render_block_core/image', array( $this, 'parse_core_image_block' ), 99, 3 );
+                add_filter( 'image_size_names_choose', array( $this, 'add_missing_sizes' ), 99, 1 );
+                //add_filter( 'render_block_core/image', array( $this, 'parse_core_image_block' ), 99, 3 );
                 add_filter( 'render_block_core/cover', array( $this, 'parse_core_cover_block' ), 99, 3 );
                 add_filter( 'wp_get_attachment_image_attributes', array( $this, 'filter_image_attributes' ), 99, 3 );
                 add_action( 'init', array( $this, 'add_image_sizes' ));
@@ -207,6 +208,15 @@ class Cloudinary {
             self::$all_sizes = wp_get_registered_image_subsizes();
         }
         return self::$all_sizes;
+    }
+
+    public function add_missing_sizes( $sizes ) {
+        $all_sizes = $this->get_registered_image_sizes();
+        foreach( $all_sizes as $size => $details ){
+            $sizes[ $size ] = __( ucwords( str_replace( [ '-', '_' ], [ ' ', '-' ], $size ) ) . " (" . $details['width'] . "px)" );
+        }
+
+        return $sizes;
     }
 
     public function convert_to_compass($cropping){
