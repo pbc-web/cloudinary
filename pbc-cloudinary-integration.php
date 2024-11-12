@@ -71,7 +71,7 @@ class Cloudinary {
                 add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_src' ), 99, 4 ); 
                 add_filter( 'wp_calculate_image_srcset', array( $this, 'filter_srcset_urls' ), 99, 5 );
                 add_filter( 'image_size_names_choose', array( $this, 'add_missing_sizes' ), 99, 1 );
-                //add_filter( 'render_block_core/image', array( $this, 'parse_core_image_block' ), 99, 3 );
+                add_filter( 'render_block_core/image', array( $this, 'parse_core_image_block' ), 99, 3 );
                 add_filter( 'render_block_core/cover', array( $this, 'parse_core_cover_block' ), 99, 3 );
                 add_filter( 'wp_get_attachment_image_attributes', array( $this, 'filter_image_attributes' ), 99, 3 );
                 add_action( 'init', array( $this, 'add_image_sizes' ));
@@ -155,19 +155,30 @@ class Cloudinary {
 
     public function parse_core_image_block( $block_content, $parsed, $block_class ) {
         if(!empty($parsed['attrs'])){
-            $size = isset($parsed['attrs']['sizeSlug']) ? $parsed['attrs']['sizeSlug'] : 'full';
-            $id = $parsed['attrs']['id'];
-            $matches = array();
-            preg_match('/src="(.*?)"/',$block_content,$matches);
-            if(isset($matches[1])) {
-                preg_match('/sites\/(\d*)\//',$matches[1],$sites);
-                $site = isset($sites) && !empty($sites) && isset($sites[1]) ? $sites[1] : '';
-                $details = $this->filtered_attachment_metadata($id, $site);
-                if($details){
-                    $url_to_mod = isset($sites) && !empty($sites) ? $sites[0].$details['file'] : $details['file'];
-                    $modifications = $this->create_sizing_filters($size);
-                    $url = $this->filter_attachment_url($url_to_mod, $id, $modifications);
-                    $block_content = str_replace($matches[1], $url, $block_content);
+            $size = $parsed['attrs']['sizeSlug'] ?? 'full';
+            $id = $parsed['attrs']['id'] ?? '';
+            if($id){
+                $matches = array();
+                preg_match('/src="(.*?)"/',$block_content,$matches);
+                if(isset($matches[1])) {
+                    preg_match('/sites\/(\d*)\//',$matches[1],$sites);
+                    $site = isset($sites) && !empty($sites) && isset($sites[1]) ? $sites[1] : '';
+                    $details = $this->filtered_attachment_metadata($id, $site);
+                    if($size && $size !== 'full'){
+                        if(isset($details['sizes'][$size])){
+                            $new_sizes = wp_calculate_image_sizes($size, '', $details);
+                            preg_match('/width="(.*?)"/',$block_content,$temp);
+                            if(empty($temp)){
+                                $block_content = str_replace('<img ', '<img width="' . $details['sizes'][$size]['width'] . '" height="' . $details['sizes'][$size]['height'] . '" sizes="' . $new_sizes . '" ', $block_content);
+                            }
+                        }
+                    }
+                    if($details && !str_contains($matches[1], 'https://res.cloudinary.com')){ //prevent firing where cloudinary conversion already applied
+                        $url_to_mod = isset($sites) && !empty($sites) ? $sites[0].$details['file'] : $details['file'];
+                        $modifications = $this->create_sizing_filters($size);
+                        $url = $this->filter_attachment_url($url_to_mod, $id, $modifications);
+                        $block_content = str_replace($matches[1], $url, $block_content);
+                    }
                 }
             }
         }
