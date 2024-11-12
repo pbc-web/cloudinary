@@ -155,7 +155,7 @@ class Cloudinary {
 
     public function parse_core_image_block( $block_content, $parsed, $block_class ) {
         if(!empty($parsed['attrs'])){
-            $size = $parsed['attrs']['sizeSlug'];
+            $size = isset($parsed['attrs']['sizeSlug']) ? $parsed['attrs']['sizeSlug'] : 'full';
             $id = $parsed['attrs']['id'];
             $matches = array();
             preg_match('/src="(.*?)"/',$block_content,$matches);
@@ -376,7 +376,7 @@ class Cloudinary {
         
         foreach($sizes as $size_name=>$image) {
             // Filter out images that are from previous edits.
-            if ( $image_edited && ! strpos( $image['file'], $image_edit_hash[0] ) ) {
+            if ( $image_edited && isset($image['file']) && ! strpos( $image['file'], $image_edit_hash[0] ) ) {
                 continue;
             }
             if($image['height'] === 0 || $image['width'] === 0){ //Figure out equivalent height of image for sizes that don't exist within $image_meta
