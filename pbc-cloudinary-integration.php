@@ -188,7 +188,8 @@ class Cloudinary {
 
     public function filter_attachment_src($image, $attachment_id, $size, $icon) {
         $extra_options = '';
-        list( $src, $width, $height, $crop ) = $image;
+        list( $src, $width, $height) = $image;
+		$crop = (isset($image[3]) && $image[3]) ?? false;
 
         if(is_array($size)){
             list( $size_w, $size_h ) = $size;
